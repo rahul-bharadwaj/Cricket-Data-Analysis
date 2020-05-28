@@ -5,5 +5,122 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.cap = "", fig.path = "Plot")
 ```
 
+```{r Libraries, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+library(plotly)
+library(knitr)
+library(gridExtra)
+library(kableExtra)
+library(cricketdata)
+```
+
+# Introduction
+This report aims at deducing the quality of batsmen in cricket from around the globe. The data used for this purpose is downloaded from the R package "cricketdata" from the following link - [Cricket Data Source.](https://docs.ropensci.org/cricketdata/) Data on all international cricket matches is provided by ESPNCricinfo. This package provides some scraper functions to download the data into tibbles ready for analysis. For the purpose of the assignment, this data is trimmed to suit our needs and consists of only 5 variables and 500 observations.
+
+We can install cricketdata from github with:
+```{r GitHubData, eval=FALSE, warning=FALSE}
+install.packages("devtools")
+devtools::install_github("ropenscilabs/cricketdata")
+```
+
+We are looking at only a subset of this data using the following lines of code:
+```{r Data, eval=FALSE, cache=TRUE, warning=FALSE}
+cric_bat_data <- fetch_cricinfo("ODI", "Men", "Batting", "Career")
+
+Data <- cric_bat_data %>% select("Player", 
+                                 "Innings",
+                                 "Runs", 
+                                 "BallsFaced",
+                                 "Hundreds")
+
+write.csv(Data, file = "Cricket.csv")
+```
+
+Once this data has been processed into a Comma Seperated Value file (csv), the rows and columns are trimmed according to the needs of the analysis. The variables used for the analysis are "Player", "Innings", "Runs", "BallsFaced", and "Hundreds". The factors used to compare and decide on the quality of a certain player are deduced from a simple variable like the number of Hundreds scored or from the Average of a player that can be derived from the runs scored and innings played by a certain player.
+The Factors considered for deciding the quality of a player are -
+
+- **Average** - Runs scored per match
+- **Strike Rate** - Runs scored per ball
+- **Hundreds** - Number of 100s scored in career
+
+The reasoning behind this is that any player scoring consistently in every match and scoring more runs per ball compared to others, is a quality player. The number of hundreds scored is also a good indicator of the quality of the player.
+
+The concise data is read from the csv file as follows -
+
+```{r ReadData}
+cric_data <- read.csv("Cricket.csv")
+#opts_current$get('label')
+# The following code shows sample of the data in tabular form
+
+knitr::kable(
+cric_data[1:5,], booktabs = TRUE,
+  caption = 'A table of the first 5 rows of the data')
+```
+
+With this background, we can start an exploratory data analysis with the data that has been read from a csv file.
+
+# Exploratory Data Analysis
+The average and strike rate of each player is calculated and made into new columns as follows-
+```{r Calculate}
+calc_cric_data <- cric_data %>% mutate(Average = cric_data$Runs/cric_data$Innings) %>% mutate(StrikeRate = cric_data$Runs/cric_data$BallsFaced*100) %>% drop_na()
+```
+
+```{r DerivedData}
+knitr::kable(
+calc_cric_data[1:5,], booktabs = TRUE,
+  caption = 'A table of the first 5 rows of the derived data')
+```
+
+**Let us consider players with an average of above 40, strike rate of above 100, and more than 15 centuries recorded for the purpose of analysis and plot a Bar Graph.**
+```{r topvars}
+top_avg <- calc_cric_data %>% dplyr::filter(Average>40)
+top_sr <- calc_cric_data %>%  dplyr::filter(StrikeRate>100)
+top_century <- calc_cric_data %>%  dplyr::filter(Hundreds>15)
+```
+
+```{r PlotsAvg}
+plot1 <- ggplot(data = top_avg, aes( x = Player, y = Average )) +
+  geom_bar(stat = "identity", fill = "blue") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + coord_flip()
+```
+
+```{r PlotsSR}
+plot2 <- ggplot(data = top_sr, aes( x = Player, y = StrikeRate )) +
+  geom_bar(stat = "identity", fill = "black") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + coord_flip()
+```
+**Let us compare the two Plots -**
+```{r PlotCompare, fig.cap= "Comparing Averages and Strike Rates of top players"}
+ggarrange(plot1, plot2)
+```
+
+**Let's look at the number of hundreds scored by players who has scored a minimum of 15 centuries.**
+```{r DotPlot, fig.cap="Hundreds scored by players"}
+p <- ggplot(data = top_century, aes( x = Player, y = Hundreds )) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + coord_flip()
+
+ggplotly(p)
+
+```
+
+We are looking at Averages, Strike Rates, and Centuries of players in the ODI format as it is a mix of all skills needed by a batsman in this format. The data from Test or T20 formats might hold data that wouldn't give an overall picture of the qaulity of a player.
+
+# Conclusion
+The table \@ref(tab:ReadData) has the initial dataset. The Table \@ref(tab:DerivedData) has the derived columns consisting of averages and strike rates.
+
+From the Plot \@ref(fig:PlotCompare), we can view averages and strike rates of some of the best players in those terms. This gives us a clear picture as to who is more suitable for which format of the game. It is clear that players who are listed in both the top averages and top strike rates are most desirable for selection.
+The figure \@ref(fig:DotPlot) depicts an interactive plot of number of centuries scored by some of the top players around the globe. We have considered a minimum of 15 centuries for this analysis so that only the top players are considered.
+From the analysis made it is clear that -
+After comparing the Average and Strike Rates of players we can decide which player is more suitable for what format of the game.
+
+- **T20 Format** - High Strike Rate desirable.
+- **ODI Format** - A mix of both good Average and Strike Rate desirable.
+- **TEST Format** - High Average desirable.
+
+These two factors along with the data on the number of centuries by that particular makes it a clear choice for the selectors to pick the best players for the respective teams around the globe.
