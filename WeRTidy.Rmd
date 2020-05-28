@@ -1,5 +1,5 @@
 ---
-title: "WeRTidy"
+title: "WeRTidy - Datset and Project Overview"
 output: html_document
 ---
 
@@ -8,7 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.cap = "", fig.path = "Plot")
 ```
 
-```{r Libraries, warning=FALSE, echo=FALSE}
+```{r Libraries, warning=FALSE, echo=FALSE, message=FALSE}
 library(tidyverse)
 library(ggpubr)
 library(ggplot2)
@@ -20,120 +20,87 @@ library(cricketdata)
 ```
 
 # Introduction
-This report aims at deducing the quality of batsmen in cricket from around the globe. The data used for this purpose is downloaded from the R package "cricketdata" from the following link - [Cricket Data Source.](https://docs.ropensci.org/cricketdata/) Data on all international cricket matches is provided by ESPNCricinfo. This package provides some scraper functions to download the data into tibbles ready for analysis. For the purpose of the assignment, this data is trimmed to suit our needs and consists of only 5 variables and 500 observations.
+This report aims at providing an overview of the Data Source and the Analysis that can be expected from it to answer certain questions about the data. The data used for the IDA final group assessment task is downloaded from the R package "cricketdata" from the following link - [Cricket Data Source.](https://docs.ropensci.org/cricketdata/) Data on all international cricket matches is provided by ESPNCricinfo. This package provides some scraper functions to download the data into tibbles ready for analysis. There are some inconsistencies in the data with the Player name sometimes having the Country/CountryCode as well. This data is tidied up in a manner suitable to answer the questions about it.
 
-We can install cricketdata from github with:
-```{r GitHubData, eval=FALSE, warning=FALSE}
+# Case Study -
+
+In the midst of the epidemic, 4 friends started a discussion about a common sport, Cricket, with Rahul being the die-hard fan, Aarathy, a fan limited to popular opinion and social trends, Soban who only knew as much as the grapevines allowed, while Ed was hearing about it as a revelation.
+
+Cricket is an international sport watched throughout the world, played on every continent, with fans in every country. Internationally cricket matches are played as a series of test matches, ODI’s, T20s and World cup.  
+
+Talking about this had Rahul on edge, Aarathy kept using Instagram followers and likes on photographs to tell which cricketer is better. Soban, on the other hand, used memes and grapevines to justify his choice of players in each category. Ed went through google and youtube to understand the game process and found some dataset about player stats around the world. This did not make sense to Rahul, he was using cold hard facts to support his choice but he had no output display that was very convincing to the others. Rahul had a sense of determination, knowledge of using data and a platform to make it visually appealing. 
+
+Rahul started using cricket data to explore the performances of players and in ODI cricket. Who is on top? Who has the best stats? WHY? What are the best teams for fantasy cricket? What is the "all-time best eleven" for cricket?
+
+To answer these questions and finally, individually assess each selected member of the "all-time best eleven" team is the goal!
+
+
+- We can install cricketdata from github with:
+```{r GitHubData, eval=FALSE, warning=FALSE, echo=TRUE}
 install.packages("devtools")
 devtools::install_github("ropenscilabs/cricketdata")
 ```
 
-We are looking at only a subset of this data using the following lines of code:
+- We are looking at this data using the following lines of code:
 ```{r Data, cache=TRUE, warning=FALSE}
 cric_bat_data <- fetch_cricinfo("ODI", "Men", "Batting", "Career") %>% select(-Country)
 cric_bowl_data <- fetch_cricinfo("ODI", "Men", "Bowling", "Career") %>% select(-Country)
 cric_field_data <- fetch_cricinfo("ODI", "Men", "Fielding", "Career") %>% select(-Country)
 ```
 
-Once this data has been processed into a Comma Seperated Value file (csv), the rows and columns are trimmed according to the needs of the analysis.
+- The data is tidied up to exclude Country Names as our main point of interest to focus on the "all-time best eleven" irrespective of the Nationalities.
 
-The concise data is read from the csv file as follows -
-```{r Tidying}
-field_data_tidy <- separate(cric_field_data,
-                            col = "Player",
-                            into = c("Player", "Region"),
-                            sep = "[*(*]"
+- We use a user-defined function to tidy up the data as follows:
+```{r Tidying, echo=TRUE, message=FALSE, warning=FALSE}
+tidy_data <- function(data) {
+  separate(data,
+           col = "Player",
+           into = c("Player", "Region"),
+           sep = "[*(*]"
 )
+}
 
-bowl_data_tidy <- separate(cric_bowl_data,
-                            col = "Player",
-                            into = c("Player", "Region"),
-                            sep = "[*(*]"
-)
-
-bat_data_tidy <- separate(cric_bat_data,
-                            col = "Player",
-                            into = c("Player", "Region"),
-                            sep = "[*(*]"
-)
-
-bat_data <- bat_data_tidy %>% select(-Region)
-bowl_data <- bowl_data_tidy %>% select(-Region)
-field_data <- field_data_tidy %>% select(-Region)
-field_data
+bat_data <- tidy_data(cric_bat_data) %>% select(-Region)
+bowl_data <- tidy_data(cric_bowl_data) %>% select(-Region)
+field_data <- tidy_data(cric_field_data) %>% select(-Region)
 ```
+
+- As a result of this tidying process, we eleminate the inconsistencies in Player Names and also remove the column Country.
+
+- We next write the tidied datasets into CSV files for convenient veiwing of the data on any OS:
 ```{r WriteCSV}
 write.csv(bat_data, file = "Batting.csv")
 write.csv(bowl_data, file = "Bowling.csv")
 write.csv(field_data, file = "Fielding.csv")
 ```
 
+- The goal of the Exploratory Analysis is to form an eleven member team consisting of Batsmen, Bowlers, All-Rounders and a Wicket-Keeper. The criteria to select the members who are experts in a particular art of the game or the activity is based on certain mathematical formulations such as Averages and Strike Rates for Batsmen, Economies and Wickets for Bowlers, and all-round performance of both for All-Rounders. Futher the wicket-keeper is selected based on some fielding stats such as stumpings and caught-behinds.
 
+- The next step would be to analyse each player of the "all-time best eleven" individually to assess their performances over time and guage their value in the team!
 
+- The dataset has scope to further investigate Women's cricket stats over time and demonstrate the trend of the standards of their gameplay.
 
+# A Sample Analysis Plot planned -
 
-
-
-
-
-```{r CalculateBat}
+```{r Calculate, echo=FALSE}
 top_bat_data <- bat_data %>% filter(Matches>100) %>% 
    mutate(Batting_Quality = (Runs/BallsFaced) * Innings,
           diff = Batting_Quality-Innings,
-           Player=as.character(Player)) %>% 
+          Player=as.character(Player)) %>% 
+          arrange(desc(diff)) %>%
+          drop_na() %>% head(500) %>%
+          rename(Batting_Average=Average,
+          Batting_Strikerate=StrikeRate)
 
-  arrange(desc(diff)) %>%
-  
-  drop_na() %>% head(500) %>%
-  rename(Batting_Average=Average,
-         Batting_Strikerate=StrikeRate)
-
-plot_bat <-  top_bat_data %>% 
-  ggplot(aes(x=diff,y=Player)) + 
-  geom_point()+ 
-  geom_vline(xintercept = 0, color = "red")
-  ggplotly(plot_bat)
-```
-
-
-
-```{r CalculateBowl}
 top_bowl_data <- bowl_data %>% filter(Matches>100) %>% 
   mutate(efficiency = Wickets/Innings,
          Player = as.character(Player))  %>%
-  head(500) %>% rename(Bowling_Average=Average,
-                       Bowling_Strikerate=StrikeRate)
-                        
-plot_bowl <- top_bowl_data %>% 
-  ggplot(aes(x=efficiency,y=Player))+
-  geom_point()+
-  geom_vline(xintercept = 1,color="red")  
-  ggplotly(plot_bowl)
+         head(500) %>% rename(Bowling_Average=Average,
+         Bowling_Strikerate=StrikeRate)
 ```
 
 
-```{r CalculateField}
-top_field_data <- field_data %>% filter(Matches>100) %>% 
-  mutate(overall_fielder=Dismissals/Innings,
-         wicketkeeper=(Stumped+CaughtBehind)/Innings,
-         Player=as.character(Player)) %>% 
-  head(500)
-
-plot_field <- top_field_data %>% 
-  ggplot(aes(x=overall_fielder,y=Player))+
-  geom_point()+
-  geom_vline(xintercept = 1,color="red")  
-  ggplotly(plot_field)
-  
- plot_wk <- top_field_data %>% 
-  ggplot(aes(x=wicketkeeper,y=Player))+
-  geom_point()+
-  geom_vline(xintercept = 1,color="red")  
-  ggplotly(plot_wk)
-```
-
-
-```{r PlotBatBowl}
+```{r PlotBatBowl, echo=FALSE}
 ##join
 bat_bowl <- top_bat_data %>% filter(Matches>100) %>% 
   inner_join(top_bowl_data,by = "Player") %>% 
@@ -144,20 +111,6 @@ plot_batbowl <- bat_bowl %>%
   geom_point()+geom_vline(xintercept = 0, color="red") + theme(legend.position = "none")
 
 ggplotly(plot_batbowl)
-```
-
-```{r PlotWKBat}
-
-top_100_field <- top_field_data %>% filter(Matches>100)
-
-bat_field <- top_bat_data %>% filter(Matches>100) %>% 
-  inner_join(top_100_field,by = "Player") %>% arrange(desc(Batting_Average))
-
-plot_batfield <- bat_field %>% 
-  ggplot(aes(y=Batting_Average,x=wicketkeeper,color=Player))+
-  geom_point()+geom_vline(xintercept = 0, color="red") + theme(legend.position = "none")
-
-ggplotly(plot_batfield)
 ```
 
 
