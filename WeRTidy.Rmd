@@ -77,7 +77,7 @@ write.csv(field_data, file = "Fielding.csv")
 
 
 ```{r CalculateBat}
-top_bat_data <- bat_data %>%
+top_bat_data <- bat_data %>% filter(Matches>100) %>% 
    mutate(Batting_Quality = (Runs/BallsFaced) * Innings,
           diff = Batting_Quality-Innings,
            Player=as.character(Player)) %>% 
@@ -98,7 +98,7 @@ plot_bat <-  top_bat_data %>%
 
 
 ```{r CalculateBowl}
-top_bowl_data <- bowl_data %>%
+top_bowl_data <- bowl_data %>% filter(Matches>100) %>% 
   mutate(efficiency = Wickets/Innings,
          Player = as.character(Player))  %>%
   head(500) %>% rename(Bowling_Average=Average,
@@ -113,7 +113,7 @@ plot_bowl <- top_bowl_data %>%
 
 
 ```{r CalculateField}
-top_field_data <- field_data %>% 
+top_field_data <- field_data %>% filter(Matches>100) %>% 
   mutate(overall_fielder=Dismissals/Innings,
          wicketkeeper=(Stumped+CaughtBehind)/Innings,
          Player=as.character(Player)) %>% 
@@ -133,17 +133,31 @@ plot_field <- top_field_data %>%
 ```
 
 
-```{r}
+```{r PlotBatBowl}
 ##join
-bat_bowl <- top_bat_data %>%
-  inner_join(top_bowl_data, by = "Player") %>% 
-  select(Player, efficiency, diff, Batting_Quality)
+bat_bowl <- top_bat_data %>% filter(Matches>100) %>% 
+  inner_join(top_bowl_data,by = "Player") %>% 
+  select(Player,efficiency,diff,Batting_Average,Batting_Quality) 
 
 plot_batbowl <- bat_bowl %>% 
-  ggplot(aes(y=diff,x=efficiency,color=Player))+
+  ggplot(aes(y=Batting_Average,x=efficiency,color=Player))+
   geom_point()+geom_vline(xintercept = 0, color="red") + theme(legend.position = "none")
 
 ggplotly(plot_batbowl)
+```
+
+```{r PlotWKBat}
+
+top_100_field <- top_field_data %>% filter(Matches>100)
+
+bat_field <- top_bat_data %>% filter(Matches>100) %>% 
+  inner_join(top_100_field,by = "Player") %>% arrange(desc(Batting_Average))
+
+plot_batfield <- bat_field %>% 
+  ggplot(aes(y=Batting_Average,x=wicketkeeper,color=Player))+
+  geom_point()+geom_vline(xintercept = 0, color="red") + theme(legend.position = "none")
+
+ggplotly(plot_batfield)
 ```
 
 
