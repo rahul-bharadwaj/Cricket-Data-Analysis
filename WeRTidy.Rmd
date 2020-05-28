@@ -1,5 +1,5 @@
 ---
-title: "WeRTidy - Datset and Project Overview"
+title: "WeRTidy - Dataset and Project Overview"
 output: html_document
 ---
 
@@ -20,7 +20,7 @@ library(cricketdata)
 ```
 
 # Introduction
-This report aims at providing an overview of the Data Source and the Analysis that can be expected from it to answer certain questions about the data. The data used for the IDA final group assessment task is downloaded from the R package "cricketdata" from the following link - [Cricket Data Source.](https://docs.ropensci.org/cricketdata/) Data on all international cricket matches is provided by ESPNCricinfo. This package provides some scraper functions to download the data into tibbles ready for analysis. There are some inconsistencies in the data with the Player name sometimes having the Country/CountryCode as well. This data is tidied up in a manner suitable to answer the questions about it.
+This report aims at providing an overview of the Data Source and the Analysis that can be expected from it to answer certain questions about the data. The data used for the IDA final group assessment task is downloaded from the R package "cricketdata" from the following link - [Cricket Data Source.](https://docs.ropensci.org/cricketdata/) Data on all international cricket matches is provided by ESPNCricinfo. This package provides some scraper functions to download the data into tibbles ready for analysis.
 
 # Case Study -
 
@@ -42,15 +42,21 @@ devtools::install_github("ropenscilabs/cricketdata")
 ```
 
 - We are looking at this data using the following lines of code:
-```{r Data, cache=TRUE, warning=FALSE}
+```{r Data, cache=TRUE, warning=FALSE, echo=TRUE}
 cric_bat_data <- fetch_cricinfo("ODI", "Men", "Batting", "Career") %>% select(-Country)
 cric_bowl_data <- fetch_cricinfo("ODI", "Men", "Bowling", "Career") %>% select(-Country)
 cric_field_data <- fetch_cricinfo("ODI", "Men", "Fielding", "Career") %>% select(-Country)
 ```
-
 - The data is tidied up to exclude Country Names as our main point of interest to focus on the "all-time best eleven" irrespective of the Nationalities.
 
-- We use a user-defined function to tidy up the data as follows:
+- We next write the raw datasets into CSV files for convenient veiwing of the data on any OS:
+```{r WriteCSV}
+write.csv(cric_bat_data, file = "Batting.csv")
+write.csv(cric_bowl_data, file = "Bowling.csv")
+write.csv(cric_field_data, file = "Fielding.csv")
+```
+
+-  There are some inconsistencies in the data with the Player name sometimes having the Country/CountryCode as well. This data is tidied up in a manner suitable to answer the questions about it. We use a user-defined function to tidy up the data as follows:
 ```{r Tidying, echo=TRUE, message=FALSE, warning=FALSE}
 tidy_data <- function(data) {
   separate(data,
@@ -66,13 +72,6 @@ field_data <- tidy_data(cric_field_data) %>% select(-Region)
 ```
 
 - As a result of this tidying process, we eleminate the inconsistencies in Player Names and also remove the column Country.
-
-- We next write the tidied datasets into CSV files for convenient veiwing of the data on any OS:
-```{r WriteCSV}
-write.csv(bat_data, file = "Batting.csv")
-write.csv(bowl_data, file = "Bowling.csv")
-write.csv(field_data, file = "Fielding.csv")
-```
 
 - The goal of the Exploratory Analysis is to form an eleven member team consisting of Batsmen, Bowlers, All-Rounders and a Wicket-Keeper. The criteria to select the members who are experts in a particular art of the game or the activity is based on certain mathematical formulations such as Averages and Strike Rates for Batsmen, Economies and Wickets for Bowlers, and all-round performance of both for All-Rounders. Futher the wicket-keeper is selected based on some fielding stats such as stumpings and caught-behinds.
 
