@@ -69,30 +69,89 @@ write.csv(field_data, file = "Fielding.csv")
 ```
 
 
-```{r PlotsAvg, eval = FALSE}
-plot1 <- ggplot(data = top_avg, aes( x = Player, y = Average )) +
-  geom_bar(stat = "identity", fill = "blue") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + coord_flip()
+
+
+
+
+
+
+
+```{r Calculate}
+top_bat_data <- bat_data %>%
+   mutate(Batting_Quality = (Runs/BallsFaced) * Innings,
+          diff = Batting_Quality-Innings,
+           Player=as.character(Player)) %>% 
+
+  arrange(desc(diff)) %>%
+  
+  drop_na() %>% head(500) %>%
+  rename(Batting_Average=Average,
+         Batting_Strikerate=StrikeRate)
 ```
 
-```{r PlotsSR, eval = FALSE}
-plot2 <- ggplot(data = top_sr, aes( x = Player, y = StrikeRate )) +
-  geom_bar(stat = "identity", fill = "black") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + coord_flip()
-```
-**Let us compare the two Plots -**
-```{r eval = FALSE, PlotCompare, fig.cap= "Comparing Averages and Strike Rates of top players"}
-ggarrange(plot1, plot2)
-```
-
-**Let's look at the number of hundreds scored by players who has scored a minimum of 15 centuries.**
-```{r eval = FALSE, DotPlot, fig.cap="Hundreds scored by players"}
-p <- ggplot(data = top_century, aes( x = Player, y = Hundreds )) +
-  geom_point() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + coord_flip()
-
-ggplotly(p)
+```{r figureplot, fig.height=7}
+plot_bat <-  top_bat_data %>% 
+  ggplot(aes(x=diff,y=Player)) + 
+  geom_point()+ 
+  geom_vline(xintercept = 0, color = "red")
+  ggplotly(plot_bat)
 
 ```
+
+
+```{r}
+
+top_bowl_data <- bowl_data %>%
+  mutate(efficiency = Wickets/Innings,
+         Player = as.character(Player))  %>%
+  head(500) %>% rename(Bowling_Average=Average,
+                       Bowling_Strikerate=StrikeRate)
+                        
+plot_bowl <- top_bowl_data %>% 
+  ggplot(aes(x=efficiency,y=Player))+
+  geom_point()+
+  geom_vline(xintercept = 1,color="red")  
+  ggplotly(plot_bowl)
+```
+
+
+```{r}
+top_field_data <- field_data %>% 
+  mutate(overall_fielder=Dismissals/Innings,
+         wicketkeeper=(Stumped+CaughtBehind)/Innings,
+         Player=as.character(Player)) %>% 
+  head(500) 
+```
+
+
+```{r}
+plot_field <- top_field_data %>% 
+  ggplot(aes(x=overall_fielder,y=Player))+
+  geom_point()+
+  geom_vline(xintercept = 1,color="red")  
+  ggplotly(plot_field)
+  
+  
+  plot_wk <- top_field_data %>% 
+  ggplot(aes(x=wicketkeeper,y=Player))+
+  geom_point()+
+  geom_vline(xintercept = 1,color="red")  
+  ggplotly(plot_wk)
+  
+```
+
+```{r}
+##join
+bat_bowl <- top_bat_data %>%
+  inner_join(top_bowl_data, by = "Player") %>% 
+  select(Player, efficiency, diff, Batting_Quality)
+
+plot_batbowl <- bat_bowl %>% 
+  ggplot(aes(y=diff,x=efficiency,color=Player))+
+  geom_point()+geom_vline(xintercept = 0, color="red") + theme(legend.position = "none")
+
+ggplotly(plot_batbowl)
+```
+
 
 
