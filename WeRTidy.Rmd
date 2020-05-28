@@ -76,7 +76,7 @@ write.csv(field_data, file = "Fielding.csv")
 
 
 
-```{r Calculate}
+```{r CalculateBat}
 top_bat_data <- bat_data %>%
    mutate(Batting_Quality = (Runs/BallsFaced) * Innings,
           diff = Batting_Quality-Innings,
@@ -87,20 +87,17 @@ top_bat_data <- bat_data %>%
   drop_na() %>% head(500) %>%
   rename(Batting_Average=Average,
          Batting_Strikerate=StrikeRate)
-```
 
-```{r figureplot, fig.height=7}
 plot_bat <-  top_bat_data %>% 
   ggplot(aes(x=diff,y=Player)) + 
   geom_point()+ 
   geom_vline(xintercept = 0, color = "red")
   ggplotly(plot_bat)
-
 ```
 
 
-```{r}
 
+```{r CalculateBowl}
 top_bowl_data <- bowl_data %>%
   mutate(efficiency = Wickets/Innings,
          Player = as.character(Player))  %>%
@@ -115,30 +112,26 @@ plot_bowl <- top_bowl_data %>%
 ```
 
 
-```{r}
+```{r CalculateField}
 top_field_data <- field_data %>% 
   mutate(overall_fielder=Dismissals/Innings,
          wicketkeeper=(Stumped+CaughtBehind)/Innings,
          Player=as.character(Player)) %>% 
-  head(500) 
-```
+  head(500)
 
-
-```{r}
 plot_field <- top_field_data %>% 
   ggplot(aes(x=overall_fielder,y=Player))+
   geom_point()+
   geom_vline(xintercept = 1,color="red")  
   ggplotly(plot_field)
   
-  
-  plot_wk <- top_field_data %>% 
+ plot_wk <- top_field_data %>% 
   ggplot(aes(x=wicketkeeper,y=Player))+
   geom_point()+
   geom_vline(xintercept = 1,color="red")  
   ggplotly(plot_wk)
-  
 ```
+
 
 ```{r}
 ##join
