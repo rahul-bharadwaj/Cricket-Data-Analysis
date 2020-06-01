@@ -220,7 +220,7 @@ josavg <- jos %>% summarise(Innings = sum(!is.na(Runs)),
 JosButtler <- jos %>% filter(Start_Date > "2017-01-01") %>% 
   ggplot() +
   geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
-  geom_hline(yintercept = abdavg) +
+  geom_hline(yintercept = josavg) +
   ggtitle("Jos Buttler ODI Scores") +
   xlab("Date")
 
@@ -235,7 +235,7 @@ waravg <- war %>% summarise(Innings = sum(!is.na(Runs)),
 DavidWarner <- war %>% filter(Start_Date > "2017-01-01") %>% 
   ggplot() +
   geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
-  geom_hline(yintercept = abdavg) +
+  geom_hline(yintercept = waravg) +
   ggtitle("David Warner ODI Scores") +
   xlab("Date")
 
@@ -250,7 +250,7 @@ milavg <- mil %>% summarise(Innings = sum(!is.na(Runs)),
 DavidMiller <- mil %>% filter(Start_Date > "2017-01-01") %>% 
   ggplot() +
   geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
-  geom_hline(yintercept = abdavg) +
+  geom_hline(yintercept = milavg) +
   ggtitle("David Miller ODI Scores") +
   xlab("Date")
 
@@ -265,7 +265,7 @@ watavg <- wat %>% summarise(Innings = sum(!is.na(Runs)),
 ShaneWatson <- wat %>% filter(Start_Date > "2017-01-01") %>% 
   ggplot() +
   geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
-  geom_hline(yintercept = abdavg) +
+  geom_hline(yintercept = watavg) +
   ggtitle("Shane Watson ODI Scores") +
   xlab("Date")
 ```
