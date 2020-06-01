@@ -3,7 +3,7 @@ title: "WeRTidy - Dataset and Project Overview"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, }
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.cap = "", fig.path = "Plot")
 ```
@@ -81,15 +81,15 @@ field_data <- tidy_data(cric_field_data) %>% select(-Region)
 
 # A Sample Analysis Plot planned -
 
-```{r Calculate, echo=FALSE}
+```{r Calculate, warning=FALSE, echo=FALSE, message=FALSE}
 top_bat_data <- bat_data %>% filter(Matches>100) %>% 
    mutate(BattingQuality = (Runs/BallsFaced) * Innings,
-          diff = BattingQuality-Innings,
+          diff = (BattingQuality-Innings),
           Player=as.character(Player)) %>% 
           arrange(desc(diff)) %>%
           drop_na() %>% head(500) %>%
           rename(BattingAverage=Average,
-          BattingStrikerate=StrikeRate)
+          BattingStrikerate=StrikeRate, NetPerformance=diff)
 
 top_bowl_data <- bowl_data %>% filter(Matches>100) %>% 
   mutate(BowlingEfficiency = Wickets/Innings,
@@ -104,10 +104,10 @@ top_field_data <- field_data %>% filter(Matches>100) %>%
   head(500)
 ```
 
-```{r PlotBat}
+```{r PlotBat, warning=FALSE, echo=FALSE, message=FALSE}
 #plot-batsman
 plot_bat <-  top_bat_data %>% 
-  ggplot(aes(x = diff, y = BattingAverage, color = Player)) + 
+  ggplot(aes(x = NetPerformance, y = BattingAverage, color = Player)) + 
   geom_point()+ 
   geom_vline(xintercept = 0, color = "red") +
   ylab("Batting Average")
@@ -115,11 +115,11 @@ plot_bat <-  top_bat_data %>%
 ggplotly(plot_bat)
 ```
 
-```{r PlotBatBowl, echo=FALSE}
+```{r PlotBatBowl, warning=FALSE, echo=FALSE, message=FALSE}
 #plot-all-rounder
 bat_bowl <- top_bat_data %>% filter(Matches>100) %>% 
   inner_join(top_bowl_data, by = "Player") %>% 
-  select(Player, BowlingEfficiency, diff, BattingAverage, BattingQuality) 
+  select(Player, BowlingEfficiency, NetPerformance, BattingAverage, BattingQuality) 
 
 plot_batbowl <- bat_bowl %>% 
   ggplot(aes(y=BattingAverage, x=BowlingEfficiency, color=Player))+
@@ -130,7 +130,7 @@ plot_batbowl <- bat_bowl %>%
 ggplotly(plot_batbowl)
 ```
 
-```{r PlotBowl}
+```{r PlotBowl, warning=FALSE, echo=FALSE, message=FALSE}
 #plotbowler
 plot_bowl <- top_bowl_data %>% 
   ggplot(aes(x = BowlingEfficiency, y = Economy, color = Player))+
@@ -141,7 +141,7 @@ ggplotly(plot_bowl)
 ```
 
 
-```{r PlotField}
+```{r PlotField, warning=FALSE, echo=FALSE, message=FALSE}
 #plot-fielder
 plot_field <- top_field_data %>% filter(Stumped == 0, CaughtBehind == 0) %>% 
   ggplot(aes(x = FieldingEfficiency, y = Innings, color = Player))+
@@ -151,7 +151,7 @@ plot_field <- top_field_data %>% filter(Stumped == 0, CaughtBehind == 0) %>%
 ggplotly(plot_field)
 ```
 
-```{r PlotWK}
+```{r PlotWK, warning=FALSE, echo=FALSE, message=FALSE}
 #plotwk
 plot_wk <- top_field_data %>% filter(Stumped > 0, CaughtBehind > 0) %>% 
   ggplot(aes(x = KeepingAbility, y = Innings, color = Player))+
@@ -162,7 +162,7 @@ ggplotly(plot_wk)
 ```
 
 
-```{r PlotWKBat, echo=FALSE}
+```{r PlotWKBat, warning=FALSE, echo=FALSE, message=FALSE}
 #plotwkbat
 top_100_field <- top_field_data %>% filter(Matches>100)
 
@@ -176,5 +176,105 @@ plot_batfield <- bat_field %>%
 ggplotly(plot_batfield)
 ```
 
+# Individual Player Analysis -
 
+```{r BatsmenPlots, cache=TRUE, warning=FALSE, echo=FALSE, message=FALSE}
+#Virat Kohli
+vk <- fetch_player_data(253802, matchtype = "ODI", activity = "batting") %>% 
+  mutate(NotOut = (Dismissal == "not out"))
+
+vkavg <- vk %>% summarise(Innings = sum(!is.na(Runs)),
+                          Average = sum(Runs, na.rm=TRUE) / (Innings - sum(NotOut, na.rm = TRUE))
+                          ) %>% pull(Average)
+
+ViratKohli <- vk %>% filter(Start_Date > "2017-01-01") %>% 
+  ggplot() +
+  geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
+  geom_hline(yintercept = vkavg) +
+  ggtitle("Virat Kohli ODI Scores") +
+  xlab("Date")
+
+#AB de Villiers
+abd <- fetch_player_data(44936, matchtype = "ODI", activity = "batting") %>% 
+  mutate(NotOut = (Dismissal == "not out"))
+
+abdavg <- abd %>% summarise(Innings = sum(!is.na(Runs)),
+                          Average = sum(Runs, na.rm=TRUE) / (Innings - sum(NotOut, na.rm = TRUE))
+                          ) %>% pull(Average)
+
+ABdeVilliers <- abd %>% filter(Start_Date > "2017-01-01") %>% 
+  ggplot() +
+  geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
+  geom_hline(yintercept = abdavg) +
+  ggtitle("AB de Villiers ODI Scores") +
+  xlab("Date")
+
+#Jos Buttler
+jos <- fetch_player_data(308967, matchtype = "ODI", activity = "batting") %>% 
+  mutate(NotOut = (Dismissal == "not out"))
+
+josavg <- jos %>% summarise(Innings = sum(!is.na(Runs)),
+                          Average = sum(Runs, na.rm=TRUE) / (Innings - sum(NotOut, na.rm = TRUE))
+                          ) %>% pull(Average)
+
+JosButtler <- jos %>% filter(Start_Date > "2017-01-01") %>% 
+  ggplot() +
+  geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
+  geom_hline(yintercept = abdavg) +
+  ggtitle("Jos Buttler ODI Scores") +
+  xlab("Date")
+
+#David Warner
+war <- fetch_player_data(219889, matchtype = "ODI", activity = "batting") %>% 
+  mutate(NotOut = (Dismissal == "not out"))
+
+waravg <- war %>% summarise(Innings = sum(!is.na(Runs)),
+                          Average = sum(Runs, na.rm=TRUE) / (Innings - sum(NotOut, na.rm = TRUE))
+                          ) %>% pull(Average)
+
+DavidWarner <- war %>% filter(Start_Date > "2017-01-01") %>% 
+  ggplot() +
+  geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
+  geom_hline(yintercept = abdavg) +
+  ggtitle("David Warner ODI Scores") +
+  xlab("Date")
+
+#David Miller
+mil <- fetch_player_data(321777, matchtype = "ODI", activity = "batting") %>% 
+  mutate(NotOut = (Dismissal == "not out"))
+
+milavg <- mil %>% summarise(Innings = sum(!is.na(Runs)),
+                          Average = sum(Runs, na.rm=TRUE) / (Innings - sum(NotOut, na.rm = TRUE))
+                          ) %>% pull(Average)
+
+DavidMiller <- mil %>% filter(Start_Date > "2017-01-01") %>% 
+  ggplot() +
+  geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
+  geom_hline(yintercept = abdavg) +
+  ggtitle("David Miller ODI Scores") +
+  xlab("Date")
+
+#Shane Watson
+wat <- fetch_player_data(321777, matchtype = "ODI", activity = "batting") %>% 
+  mutate(NotOut = (Dismissal == "not out"))
+
+watavg <- wat %>% summarise(Innings = sum(!is.na(Runs)),
+                          Average = sum(Runs, na.rm=TRUE) / (Innings - sum(NotOut, na.rm = TRUE))
+                          ) %>% pull(Average)
+
+ShaneWatson <- wat %>% filter(Start_Date > "2017-01-01") %>% 
+  ggplot() +
+  geom_point(aes(x = Start_Date, y = Runs, color = NotOut)) +
+  geom_hline(yintercept = abdavg) +
+  ggtitle("Shane Watson ODI Scores") +
+  xlab("Date")
+```
+
+```{r Grid, fig.height=12, fig.width=8, warning=FALSE, echo=FALSE, message=FALSE}
+grid.arrange(ViratKohli, ABdeVilliers, JosButtler, DavidWarner, DavidMiller, ShaneWatson)
+```
+
+```{r BowlersPlots, fig.height=10}
+
+```
 
