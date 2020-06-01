@@ -83,33 +83,97 @@ field_data <- tidy_data(cric_field_data) %>% select(-Region)
 
 ```{r Calculate, echo=FALSE}
 top_bat_data <- bat_data %>% filter(Matches>100) %>% 
-   mutate(Batting_Quality = (Runs/BallsFaced) * Innings,
-          diff = Batting_Quality-Innings,
+   mutate(BattingQuality = (Runs/BallsFaced) * Innings,
+          diff = BattingQuality-Innings,
           Player=as.character(Player)) %>% 
           arrange(desc(diff)) %>%
           drop_na() %>% head(500) %>%
-          rename(Batting_Average=Average,
-          Batting_Strikerate=StrikeRate)
+          rename(BattingAverage=Average,
+          BattingStrikerate=StrikeRate)
 
 top_bowl_data <- bowl_data %>% filter(Matches>100) %>% 
-  mutate(efficiency = Wickets/Innings,
+  mutate(BowlingEfficiency = Wickets/Innings,
          Player = as.character(Player))  %>%
          head(500) %>% rename(Bowling_Average=Average,
-         Bowling_Strikerate=StrikeRate)
+         BowlingStrikerate=StrikeRate)
+
+top_field_data <- field_data %>% filter(Matches>100) %>% 
+  mutate(FieldingEfficiency=Dismissals/Innings,
+  KeepingAbility=(Stumped+CaughtBehind)/Innings,
+  Player=as.character(Player)) %>% 
+  head(500)
+```
+
+```{r PlotBat}
+#plot-batsman
+plot_bat <-  top_bat_data %>% 
+  ggplot(aes(x = diff, y = BattingAverage, color = Player)) + 
+  geom_point()+ 
+  geom_vline(xintercept = 0, color = "red") +
+  ylab("Batting Average")
+  
+ggplotly(plot_bat)
+```
+
+```{r PlotBatBowl, echo=FALSE}
+#plot-all-rounder
+bat_bowl <- top_bat_data %>% filter(Matches>100) %>% 
+  inner_join(top_bowl_data, by = "Player") %>% 
+  select(Player, BowlingEfficiency, diff, BattingAverage, BattingQuality) 
+
+plot_batbowl <- bat_bowl %>% 
+  ggplot(aes(y=BattingAverage, x=BowlingEfficiency, color=Player))+
+  geom_point()+geom_vline(xintercept = 0, color="red") + theme(legend.position = "none") +
+  xlab("Bowling Efficiency") +
+  ylab("Batting Average")
+
+ggplotly(plot_batbowl)
+```
+
+```{r PlotBowl}
+#plotbowler
+plot_bowl <- top_bowl_data %>% 
+  ggplot(aes(x = BowlingEfficiency, y = Economy, color = Player))+
+  geom_point()+
+  geom_vline(xintercept = 1,color="red")
+
+ggplotly(plot_bowl)
 ```
 
 
-```{r PlotBatBowl, echo=FALSE}
-##join
-bat_bowl <- top_bat_data %>% filter(Matches>100) %>% 
-  inner_join(top_bowl_data,by = "Player") %>% 
-  select(Player,efficiency,diff,Batting_Average,Batting_Quality) 
+```{r PlotField}
+#plot-fielder
+plot_field <- top_field_data %>% filter(Stumped == 0, CaughtBehind == 0) %>% 
+  ggplot(aes(x = FieldingEfficiency, y = Innings, color = Player))+
+  geom_point()+
+  geom_vline(xintercept = .4, color = "red")
+  
+ggplotly(plot_field)
+```
 
-plot_batbowl <- bat_bowl %>% 
-  ggplot(aes(y=Batting_Average,x=efficiency,color=Player))+
-  geom_point()+geom_vline(xintercept = 0, color="red") + theme(legend.position = "none")
+```{r PlotWK}
+#plotwk
+plot_wk <- top_field_data %>% filter(Stumped > 0, CaughtBehind > 0) %>% 
+  ggplot(aes(x = KeepingAbility, y = Innings, color = Player))+
+  geom_point() +
+  geom_vline(xintercept = 1, color = "red")  
+  
+ggplotly(plot_wk)
+```
 
-ggplotly(plot_batbowl)
+
+```{r PlotWKBat, echo=FALSE}
+#plotwkbat
+top_100_field <- top_field_data %>% filter(Matches>100)
+
+bat_field <- top_bat_data %>% filter(Matches>100) %>% 
+  inner_join(top_100_field,by = "Player") %>% arrange(desc(BattingAverage))
+
+plot_batfield <- bat_field %>% 
+  ggplot(aes(y = BattingAverage, x = KeepingAbility, color = Player))+
+  geom_point() + geom_vline(xintercept = 0, color = "red") + theme(legend.position = "none")
+
+ggplotly(plot_batfield)
 ```
 
 
