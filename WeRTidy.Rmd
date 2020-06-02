@@ -5,11 +5,12 @@ output: html_document
 
 ```{r setup, include=FALSE, }
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(fig.cap = "", fig.path = "Plot")
+knitr::opts_chunk$set(fig.cap = "", fig.path = "Plot", fig.align = 'center')
 ```
 
 ```{r Libraries, warning=FALSE, echo=FALSE, message=FALSE}
 library(tidyverse)
+library(dplyr)
 library(ggpubr)
 library(ggplot2)
 library(plotly)
@@ -36,28 +37,21 @@ To answer these questions and finally, individually assess each selected member 
 
 
 - We can install cricketdata from github with:
-```{r GitHubData, eval=FALSE, warning=FALSE, echo=TRUE}
+```{r GitHubData, include=FALSE, eval=FALSE}
 install.packages("devtools")
 devtools::install_github("ropenscilabs/cricketdata")
 ```
 
 - We are looking at this data using the following lines of code:
-```{r Data, cache=TRUE, warning=FALSE, echo=TRUE}
+```{r Data, eval=FALSE, cache=TRUE}
 cric_bat_data <- fetch_cricinfo("ODI", "Men", "Batting", "Career") %>% select(-Country)
 cric_bowl_data <- fetch_cricinfo("ODI", "Men", "Bowling", "Career") %>% select(-Country)
 cric_field_data <- fetch_cricinfo("ODI", "Men", "Fielding", "Career") %>% select(-Country)
 ```
 - The data is tidied up to exclude Country Names as our main point of interest to focus on the "all-time best eleven" irrespective of the Nationalities.
 
-- We next write the raw datasets into CSV files for convenient veiwing of the data on any OS:
-```{r WriteCSV}
-write.csv(cric_bat_data, file = "Batting.csv")
-write.csv(cric_bowl_data, file = "Bowling.csv")
-write.csv(cric_field_data, file = "Fielding.csv")
-```
-
 -  There are some inconsistencies in the data with the Player name sometimes having the Country/CountryCode as well. This data is tidied up in a manner suitable to answer the questions about it. We use a user-defined function to tidy up the data as follows:
-```{r Tidying, echo=TRUE, message=FALSE, warning=FALSE}
+```{r Tidying, eval=FALSE}
 tidy_data <- function(data) {
   separate(data,
            col = "Player",
@@ -71,6 +65,11 @@ bowl_data <- tidy_data(cric_bowl_data) %>% select(-Region)
 field_data <- tidy_data(cric_field_data) %>% select(-Region)
 ```
 
+```{r WriteCSV, eval=FALSE}
+write.csv(bat_data, file = "Batting.csv")
+write.csv(bowl_data, file = "Bowling.csv")
+write.csv(field_data, file = "Fielding.csv")
+```
 - As a result of this tidying process, we eleminate the inconsistencies in Player Names and also remove the column Country.
 
 - The goal of the Exploratory Analysis is to form an eleven member team consisting of Batsmen, Bowlers, All-Rounders and a Wicket-Keeper. The criteria to select the members who are experts in a particular art of the game or the activity is based on certain mathematical formulations such as Averages and Strike Rates for Batsmen, Economies and Wickets for Bowlers, and all-round performance of both for All-Rounders. Futher the wicket-keeper is selected based on some fielding stats such as stumpings and caught-behinds.
@@ -79,7 +78,12 @@ field_data <- tidy_data(cric_field_data) %>% select(-Region)
 
 - The dataset has scope to further investigate Women's cricket stats over time and demonstrate the trend of the standards of their gameplay.
 
-# A Sample Analysis Plot planned -
+```{r ReadData}
+bat_data <- read.csv(here::here("Data/Tidy/Batting.csv"))
+bowl_data <- read.csv(here::here("Data/Tidy/Bowling.csv"))
+field_data <- read.csv(here::here("Data/Tidy/Fielding.csv"))
+```
+
 
 ```{r Calculate, warning=FALSE, echo=FALSE, message=FALSE}
 top_bat_data <- bat_data %>% filter(Matches>100) %>% 
@@ -104,7 +108,7 @@ top_field_data <- field_data %>% filter(Matches>100) %>%
   head(500)
 ```
 
-```{r PlotBat, warning=FALSE, echo=FALSE, message=FALSE}
+```{r PlotBat, warning=FALSE, echo=FALSE, message=FALSE, fig.align='center'}
 #plot-batsman
 plot_bat <-  top_bat_data %>% 
   ggplot(aes(x = NetPerformance, y = BattingAverage, color = Player)) + 
@@ -115,7 +119,7 @@ plot_bat <-  top_bat_data %>%
 ggplotly(plot_bat)
 ```
 
-```{r PlotBatBowl, warning=FALSE, echo=FALSE, message=FALSE}
+```{r PlotBatBowl, warning=FALSE, echo=FALSE, message=FALSE, fig.align='center'}
 #plot-all-rounder
 bat_bowl <- top_bat_data %>% filter(Matches>100) %>% 
   inner_join(top_bowl_data, by = "Player") %>% 
@@ -130,7 +134,7 @@ plot_batbowl <- bat_bowl %>%
 ggplotly(plot_batbowl)
 ```
 
-```{r PlotBowl, warning=FALSE, echo=FALSE, message=FALSE}
+```{r PlotBowl, warning=FALSE, echo=FALSE, message=FALSE, fig.align='center'}
 #plotbowler
 plot_bowl <- top_bowl_data %>% 
   ggplot(aes(x = BowlingEfficiency, y = Economy, color = Player))+
@@ -141,7 +145,7 @@ ggplotly(plot_bowl)
 ```
 
 
-```{r PlotField, warning=FALSE, echo=FALSE, message=FALSE}
+```{r PlotField, warning=FALSE, echo=FALSE, message=FALSE, fig.align='center'}
 #plot-fielder
 plot_field <- top_field_data %>% filter(Stumped == 0, CaughtBehind == 0) %>% 
   ggplot(aes(x = FieldingEfficiency, y = Innings, color = Player))+
@@ -151,7 +155,7 @@ plot_field <- top_field_data %>% filter(Stumped == 0, CaughtBehind == 0) %>%
 ggplotly(plot_field)
 ```
 
-```{r PlotWK, warning=FALSE, echo=FALSE, message=FALSE}
+```{r PlotWK, warning=FALSE, echo=FALSE, message=FALSE, fig.align='center'}
 #plotwk
 plot_wk <- top_field_data %>% filter(Stumped > 0, CaughtBehind > 0) %>% 
   ggplot(aes(x = KeepingAbility, y = Innings, color = Player))+
@@ -162,7 +166,7 @@ ggplotly(plot_wk)
 ```
 
 
-```{r PlotWKBat, warning=FALSE, echo=FALSE, message=FALSE}
+```{r PlotWKBat, warning=FALSE, echo=FALSE, message=FALSE, fig.align='center'}
 #plotwkbat
 top_100_field <- top_field_data %>% filter(Matches>100)
 
@@ -178,7 +182,7 @@ ggplotly(plot_batfield)
 
 # Individual Player Analysis -
 
-```{r BatsmenPlots, cache=TRUE, warning=FALSE, echo=FALSE, message=FALSE}
+```{r BatsmenPlots, echo=FALSE}
 #Virat Kohli
 vk <- fetch_player_data(253802, matchtype = "ODI", activity = "batting") %>% 
   mutate(NotOut = (Dismissal == "not out"))
@@ -270,11 +274,36 @@ ShaneWatson <- wat %>% filter(Start_Date > "2017-01-01") %>%
   xlab("Date")
 ```
 
-```{r Grid, fig.height=12, fig.width=8, warning=FALSE, echo=FALSE, message=FALSE}
+```{r Grid1, fig.height=12, fig.width=8, warning=FALSE, echo=FALSE, message=FALSE, fig.align='center'}
 grid.arrange(ViratKohli, ABdeVilliers, JosButtler, DavidWarner, DavidMiller, ShaneWatson)
 ```
 
-```{r BowlersPlots, fig.height=10}
+```{r BowlersPlots, echo=FALSE}
+#Eonomies
+econ <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "DW Steyn ","Imran Tahir ", "M Morkel ", "M Muralitharan ", "JH Kallis ", "Shakib Al Hasan ")) %>%
+  ggplot(aes( x = Player, y = Economy )) +
+  geom_bar(stat = "identity", fill = "deepskyblue3") +
+  theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
 
+#Wickets
+wkts <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "DW Steyn ","Imran Tahir ", "M Morkel ", "M Muralitharan ", "JH Kallis ", "Shakib Al Hasan ")) %>%
+  ggplot(aes( x = Player, y = Wickets )) +
+  geom_bar(stat = "identity", fill = "brown") +
+  theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
+
+#BowlingAverage
+bowlavg <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "DW Steyn ","Imran Tahir ", "M Morkel ", "M Muralitharan ", "JH Kallis ", "Shakib Al Hasan ")) %>%
+  ggplot(aes( x = Player, y = Bowling_Average)) +
+  geom_bar(stat = "identity", fill = "forestgreen") +
+  theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
+
+#BowlingEfficiency
+bowlef <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "DW Steyn ","Imran Tahir ", "M Morkel ", "M Muralitharan ", "JH Kallis ", "Shakib Al Hasan ")) %>%
+  ggplot(aes( x = Player, y = BowlingEfficiency)) +
+  geom_bar(stat = "identity", fill = "orange") +
+  theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
 ```
 
+```{r Grid2,warning=FALSE, echo=FALSE, message=FALSE, fig.align='center'}
+grid.arrange(econ, wkts, bowlavg, bowlef)
+```
