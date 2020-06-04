@@ -3,21 +3,24 @@ title: "WeRTidy - Dataset and Project Overview"
 output: html_document
 ---
 
-```{r setup, include=FALSE, }
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.cap = "", fig.path = "Plot", fig.align = 'center')
 ```
 
 ```{r Libraries, warning=FALSE, echo=FALSE, message=FALSE}
 library(tidyverse)
-library(dplyr)
 library(ggpubr)
-library(ggplot2)
 library(plotly)
 library(knitr)
 library(gridExtra)
-library(kableExtra)
 library(cricketdata)
+library(geomnet)
+library(readr)
+library(rtweet)
+library(rvest)
+library(polite)
+library(rpart.plot)
 ```
 
 # Introduction
@@ -82,6 +85,7 @@ write.csv(field_data, file = "Fielding.csv")
 bat_data <- read.csv(here::here("Data/Tidy/Batting.csv"))
 bowl_data <- read.csv(here::here("Data/Tidy/Bowling.csv"))
 field_data <- read.csv(here::here("Data/Tidy/Fielding.csv"))
+captain <- read.csv(here::here("Data/Captain.csv"))
 ```
 
 
@@ -182,7 +186,7 @@ ggplotly(plot_batfield)
 
 # Individual Player Analysis -
 
-```{r BatsmenPlots, echo=FALSE}
+```{r BatsmenPlots, echo=FALSE, fig.height=12, fig.width=8}
 #Virat Kohli
 vk <- fetch_player_data(253802, matchtype = "ODI", activity = "batting") %>% 
   mutate(NotOut = (Dismissal == "not out"))
@@ -280,25 +284,25 @@ grid.arrange(ViratKohli, ABdeVilliers, JosButtler, DavidWarner, DavidMiller, Sha
 
 ```{r BowlersPlots, echo=FALSE}
 #Eonomies
-econ <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "DW Steyn ","Imran Tahir ", "M Morkel ", "M Muralitharan ", "JH Kallis ", "Shakib Al Hasan ")) %>%
+econ <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "AA Donald 	","Imran Tahir ", "M Morkel ", "Waqar Younis ", "JH Kallis ", "Shakib Al Hasan ")) %>%
   ggplot(aes( x = Player, y = Economy )) +
   geom_bar(stat = "identity", fill = "deepskyblue3") +
   theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
 
 #Wickets
-wkts <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "DW Steyn ","Imran Tahir ", "M Morkel ", "M Muralitharan ", "JH Kallis ", "Shakib Al Hasan ")) %>%
+wkts <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "AA Donald 	","Imran Tahir ", "M Morkel ", "Waqar Younis ", "JH Kallis ", "Shakib Al Hasan ")) %>%
   ggplot(aes( x = Player, y = Wickets )) +
   geom_bar(stat = "identity", fill = "brown") +
   theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
 
 #BowlingAverage
-bowlavg <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "DW Steyn ","Imran Tahir ", "M Morkel ", "M Muralitharan ", "JH Kallis ", "Shakib Al Hasan ")) %>%
+bowlavg <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "AA Donald 	","Imran Tahir ", "M Morkel ", "Waqar Younis ", "JH Kallis ", "Shakib Al Hasan ")) %>%
   ggplot(aes( x = Player, y = Bowling_Average)) +
   geom_bar(stat = "identity", fill = "forestgreen") +
   theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
 
 #BowlingEfficiency
-bowlef <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "DW Steyn ","Imran Tahir ", "M Morkel ", "M Muralitharan ", "JH Kallis ", "Shakib Al Hasan ")) %>%
+bowlef <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Mushtaq ", "AA Donald 	","Imran Tahir ", "M Morkel ", "Waqar Younis ", "JH Kallis ", "Shakib Al Hasan ")) %>%
   ggplot(aes( x = Player, y = BowlingEfficiency)) +
   geom_bar(stat = "identity", fill = "orange") +
   theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
@@ -307,3 +311,83 @@ bowlef <- top_bowl_data %>% dplyr::filter(Player %in% c("B Lee ", "Saqlain Musht
 ```{r Grid2,warning=FALSE, echo=FALSE, message=FALSE, fig.align='center'}
 grid.arrange(econ, wkts, bowlavg, bowlef)
 ```
+
+```{r KeepersPlots, echo=FALSE, fig.height=3, fig.width=9, message=FALSE, warning=FALSE}
+#dismissals
+keepdismissal <- top_field_data %>% dplyr::filter(Player %in% c("Q de Kock ", "JC Buttler ")) %>%
+  ggplot(aes( x = Player, y = Dismissals)) +
+  geom_bar(stat = "identity", fill = "deepskyblue3") +
+  theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
+
+#keepcaught
+keepcaught <- top_field_data %>% dplyr::filter(Player %in% c("Q de Kock ", "JC Buttler ")) %>%
+  ggplot(aes( x = Player, y = CaughtBehind)) +
+  geom_bar(stat = "identity", fill = "brown") +
+  theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
+
+#keepstump
+keepstump <- top_field_data %>% dplyr::filter(Player %in% c("Q de Kock ", "JC Buttler ")) %>%
+  ggplot(aes( x = Player, y = Stumped)) +
+  geom_bar(stat = "identity", fill = "forestgreen") +
+  theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
+
+#keepability
+keepability <- top_field_data %>% dplyr::filter(Player %in% c("Q de Kock ", "JC Buttler ")) %>%
+  ggplot(aes( x = Player, y = KeepingAbility)) +
+  geom_bar(stat = "identity", fill = "orange") +
+  theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
+```
+
+```{r Grid3, warning=FALSE, echo=FALSE, message=FALSE, fig.align='center', fig.height=3, fig.width=9}
+grid.arrange(keepdismissal, keepcaught, keepstump, keepability)
+```
+
+```{r Captain, fig.height=3, fig.width=6}
+captain %>%
+  ggplot(aes( x = Player, y = Win.Percentage)) +
+  geom_bar(stat = "identity", fill = "Black") +
+  theme(axis.text.x = element_text(hjust = 1)) + coord_flip()
+```
+.
+```{r ReadTwitterData, echo=FALSE, message=FALSE, warning=FALSE}
+#read_twitter_csv("followinglist.csv",unflatten = FALSE)
+followinglist <- read_csv(here::here("Data/followinglist.csv"))
+```
+
+```{r Network, echo=FALSE, message=FALSE, warning=FALSE}
+listfollowing <- followinglist %>% select(user,user_id,screen_name) 
+network <- listfollowing %>% select(user,screen_name) %>% filter(screen_name %in% c("imVkohli","ABdeVilliers17","josbuttler","davidwarner31","DavidMillerSA12","BrettLee_58
+","Saqlain_Mushtaq","AllanDonald33","ImranTahirSA","mornemorkel65","waqyounis99","QuinnyDeKock69","Sah75official","ShaneRWatson33","jacqueskallis75"))
+
+pop_score <- network %>% 
+  group_by(screen_name) %>% count(screen_name)%>% arrange(desc(n))
+```
+
+```{r NetworkPlot, fig.width=8, echo=FALSE}
+set.seed(5556677)
+p <- ggplot(data = network,
+ aes(from_id = user,
+ to_id = screen_name)) +
+ geom_net(aes(group=user), layout.alg = "kamadakawai",
+          colour = "blue",
+         fiteach=T, directed = T, size = 4, linewidth = .5, arrowgap = 0.02,
+           ealpha = .5, labelon = T, fontsize = 3, repel = T, 
+           labelcolour = "black", arrowsize = .5, singletons = FALSE
+        ,ecolour = "#154C07"
+         ) +
+ theme_net()
+
+p
+```
+
+
+
+
+```{r}
+rbat <- rpart(BattingQuality ~ NetPerformance, data = top_bat_data)
+rpart.plot(rbat)
+
+rbowl <- rpart(BowlingEfficiency ~ Economy, data = top_bowl_data)
+rpart.plot(rbowl)
+```
+
