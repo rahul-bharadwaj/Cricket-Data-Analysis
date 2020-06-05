@@ -1,0 +1,132 @@
+---
+title: "WeRTidy - Dataset and Project Overview"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.cap = "", fig.path = "Plot", fig.align = 'center')
+```
+
+```{r Libraries, warning=FALSE, echo=FALSE, message=FALSE}
+#loading libraries
+library(tidyverse)
+library(ggpubr)
+library(plotly)
+library(knitr)
+library(gridExtra)
+library(cricketdata)
+library(geomnet)
+library(readr)
+library(rtweet)
+library(rvest)
+library(polite)
+library(rpart.plot)
+library(tidytext)
+library(textdata)
+library(tidygraph)
+library(here)
+library(ggraph)
+library(geomnet)
+library(plotly)
+```
+
+# Introduction
+This report aims at providing an overview of the Data Source and the Analysis that can be expected from it to answer certain questions about the data. The data used for the IDA final group assessment task is downloaded from the R package "cricketdata" from the following link - [Cricket Data Source.](https://docs.ropensci.org/cricketdata/) Data on all international cricket matches is provided by ESPNCricinfo. This package provides some scraper functions to download the data into tibbles ready for analysis.
+
+# Case Study -
+
+In the midst of the epidemic, 4 friends started a discussion about a common sport, Cricket, with Rahul being the die-hard fan, Aarathy, a fan limited to popular opinion and social trends, Soban who only knew as much as the grapevines allowed, while Ed was hearing about it as a revelation.
+
+Cricket is an international sport watched throughout the world, played on every continent, with fans in every country. Internationally cricket matches are played as a series of test matches, ODI’s, T20s and World cup.  
+
+Talking about this had Rahul on edge, Aarathy kept using Instagram followers and likes on photographs to tell which cricketer is better. Soban, on the other hand, used memes and grapevines to justify his choice of players in each category. Ed went through google and youtube to understand the game process and found some dataset about player stats around the world. This did not make sense to Rahul, he was using cold hard facts to support his choice but he had no output display that was very convincing to the others. Rahul had a sense of determination, knowledge of using data and a platform to make it visually appealing. 
+
+Rahul started using cricket data to explore the performances of players and in ODI cricket. Who is on top? Who has the best stats? WHY? What are the best teams for fantasy cricket? What is the "all-time best eleven" for cricket?
+
+To answer these questions and finally, individually assess each selected member of the "all-time best eleven" team is the goal!
+
+
+- We can install cricketdata from github with:
+```{r GitHubData, include=FALSE, eval=FALSE}
+#installing the cricket data from ESPN through GitHub
+install.packages("devtools")
+devtools::install_github("ropenscilabs/cricketdata")
+```
+
+- We are looking at this data using the following lines of code:
+```{r Data, eval=FALSE, cache=TRUE}
+#Fetching cricket data without the country column
+cric_bat_data <- fetch_cricinfo("ODI", "Men", "Batting", "Career") %>% select(-Country)
+cric_bowl_data <- fetch_cricinfo("ODI", "Men", "Bowling", "Career") %>% select(-Country)
+cric_field_data <- fetch_cricinfo("ODI", "Men", "Fielding", "Career") %>% select(-Country)
+```
+- The data is tidied up to exclude Country Names as our main point of interest to focus on the "all-time best eleven" irrespective of the Nationalities.
+
+-  There are some inconsistencies in the data with the Player name sometimes having the Country/CountryCode as well. This data is tidied up in a manner suitable to answer the questions about it. We use a user-defined function to tidy up the data as follows:
+```{r Tidying, eval=FALSE}
+#user-defined function for tidying inconsistencies in data
+tidy_data <- function(data) {
+  separate(data,
+           col = "Player",
+           into = c("Player", "Region"),
+           sep = "[*(*]"
+)
+}
+# assigning variables for each activity
+bat_data <- tidy_data(cric_bat_data) %>% select(-Region)
+bowl_data <- tidy_data(cric_bowl_data) %>% select(-Region)
+field_data <- tidy_data(cric_field_data) %>% select(-Region)
+```
+
+```{r WriteCSV, eval=FALSE}
+# writing data to csv files for simple reading of cleaned data
+write.csv(bat_data, file = "Batting.csv")
+write.csv(bowl_data, file = "Bowling.csv")
+write.csv(field_data, file = "Fielding.csv")
+```
+- As a result of this tidying process, we eleminate the inconsistencies in Player Names and also remove the column Country.
+
+- The goal of the Exploratory Analysis is to form an eleven member team consisting of Batsmen, Bowlers, All-Rounders and a Wicket-Keeper. The criteria to select the members who are experts in a particular art of the game or the activity is based on certain mathematical formulations such as Averages and Strike Rates for Batsmen, Economies and Wickets for Bowlers, and all-round performance of both for All-Rounders. Futher the wicket-keeper is selected based on some fielding stats such as stumpings and caught-behinds.
+
+- The next step would be to analyse each player of the "all-time best eleven" individually to assess their performances over time and guage their value in the team!
+
+- The dataset has scope to further investigate Women's cricket stats over time and demonstrate the trend of the standards of their gameplay.
+
+```{r ReadData}
+#Reading data from cleaned csv files
+bat_data <- read.csv(here::here("Data/Tidy/Batting.csv"))
+bowl_data <- read.csv(here::here("Data/Tidy/Bowling.csv"))
+field_data <- read.csv(here::here("Data/Tidy/Fielding.csv"))
+captain <- read.csv(here::here("Data/Captain.csv"))
+```
+
+```{r Twitter, eval=FALSE}
+library(rtweet)
+api_key <- "
+mP0VpzOgCYOGDcZeUrK7kUKn8"
+api_secret_key <- "LBsm9FWM8QmqHkszlej1lv1GqfJ9d1yA6tqkOTyXCHP9ip8TCF"
+token <- create_token(
+  app = "ababproj",
+  consumer_key = api_key,
+  consumer_secret = api_secret_key,
+  set_renv = TRUE)
+```
+
+```{r, eval=FALSE}
+fds <- get_friends(c("imVkohli","ABdeVilliers17","josbuttler","davidwarner31","DavidMillerSA12","BrettLee_58
+","Saqlain_Mushtaq","AllanDonald33","ImranTahirSA","mornemorkel65","waqyounis99","QuinnyDeKock69","Sah75official","ShaneRWatson33","jacqueskallis75","Sah75official"))
+
+datafds <- lookup_users(fds$user_id)
+
+followinglist <- left_join(fds,datafds)
+
+rtweet::write_as_csv(fds, file_name = paste("friends", ".csv", sep=""))
+rtweet::write_as_csv(datafds, file_name = paste("datafriends", ".csv", sep=""))
+rtweet::write_as_csv(followinglist, file_name = paste("followinglist", ".csv", sep=""))
+
+listfollowing <- followinglist %>% select(user,user_id,screen_name) 
+network <- listfollowing %>% 
+  select(user,screen_name) %>% filter(screen_name %in% c("imVkohli","ABdeVilliers17","josbuttler","davidwarner31","DavidMillerSA12","BrettLee_58
+","Saqlain_Mushtaq","AllanDonald33","ImranTahirSA","mornemorkel65","waqyounis99","QuinnyDeKock69","Sah75official","ShaneRWatson33","jacqueskallis75","Sah75official")) 
+```
