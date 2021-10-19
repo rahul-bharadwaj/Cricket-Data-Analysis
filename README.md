@@ -1,5 +1,7 @@
 # IDAgroupAssessment
 
+Open html file to view the analysis.
+
 Methodology - 
 
 The main objective of the analysis conducted for the cricket dataset is to select an all-time best eleven cricket team. The data is extracted from ESPN CricInfo and this makes our data reliable and legitimate. The data had some inconsistencies with Player names sometimes having their country along with names. These inconsistencies were removed by defining a function with Regular Expression that filtered out only the player names. 
